@@ -17,6 +17,9 @@ public class PlayerController : MonoBehaviour
     public UIDocument uiDocument;
     private Label scoreText;
     private Button restartButton;
+    private Button backToMenuButton;
+    private Button resumeButton;
+    private bool isPaused = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -24,8 +27,17 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         scoreText = uiDocument.rootVisualElement.Q<Label>("ScoreLabel");
         restartButton = uiDocument.rootVisualElement.Q<Button>("RestartButton");
+        backToMenuButton = uiDocument.rootVisualElement.Q<Button>("BackToMenuButton");
+        resumeButton = uiDocument.rootVisualElement.Q<Button>("ResumeButton");
+  
         restartButton.style.display = DisplayStyle.None; // Hide the restart button initially
+        backToMenuButton.style.display = DisplayStyle.None; // Hide the back to menu button initially
+        resumeButton.style.display = DisplayStyle.None; // Hide the resume button initially
+
         restartButton.clicked += RestartGame;
+        backToMenuButton.clicked += BackToMenu;
+        resumeButton.clicked += ResumeGame;
+
     }
 
     // Update is called once per frame
@@ -34,6 +46,14 @@ public class PlayerController : MonoBehaviour
         UpdateScore();
         PlayerMove();
         JetFlameAnim();
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            if (isPaused)
+                ResumeGame();
+            else
+                PauseGame();
+        }
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -43,7 +63,8 @@ public class PlayerController : MonoBehaviour
 
         borderParent.SetActive(false); // Hide the parent border when the player is destroyed
 
-        restartButton.style.display = DisplayStyle.Flex; // Show the restart button when the player is destroyed
+        restartButton.style.display = DisplayStyle.Flex; 
+        backToMenuButton.style.display = DisplayStyle.Flex;
     }
 
     public void PlayerMove()
@@ -82,13 +103,34 @@ public class PlayerController : MonoBehaviour
     {
         elapsedTime += Time.deltaTime;
         score = Mathf.FloorToInt(elapsedTime * scoreMultiplier);
-        //Debug.Log("Elapsed Time: " + elapsedTime);
-        //Debug.Log("Score: " + score);
         scoreText.text = "Score : " + score;
     }
 
     void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    void BackToMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
+        isPaused = false; 
+        Time.timeScale = 1f;
+    }
+
+    void PauseGame()
+    {
+        isPaused = true;
+        Time.timeScale = 0f; // Freeze the game
+        backToMenuButton.style.display = DisplayStyle.Flex; // Show the back to menu button when the game is paused
+        resumeButton.style.display = DisplayStyle.Flex; // Show the resume button when the game is paused
+    }
+
+    void ResumeGame()
+    {
+        isPaused = false;
+        Time.timeScale = 1f; // Freeze the game
+        resumeButton.style.display = DisplayStyle.None; // Hide the resume button when the game is resumed
+        backToMenuButton.style.display = DisplayStyle.None; // Hide the back to menu button when the game is resumed
     }
 }
